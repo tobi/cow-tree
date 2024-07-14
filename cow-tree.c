@@ -11,6 +11,7 @@
 #include <sys/clonefile.h>
 #elif __linux__
 #include <sys/ioctl.h>
+#include <linux/fs.h>
 #include <linux/btrfs.h>
 #endif
 
@@ -77,7 +78,36 @@ int clone_file(const char *source, const char *target)
         return -1;
     }
 
-    int result = ioctl(dst_fd, BTRFS_IOC_CLONE, src_fd);
+    int result = -1;
+    int fs_type;
+
+    // Get filesystem type
+    if (ioctl(dst_fd, FIGETBSZ, &fs_type) == -1)
+    {
+        perror("Error getting filesystem type");
+        close(src_fd);
+        close(dst_fd);
+        return -1;
+    }
+
+    // Try BTRFS_IOC_CLONE first
+    result = ioctl(dst_fd, BTRFS_IOC_CLONE, src_fd);
+    if (result == -1 && errno == ENOTTY)
+    {
+        // If BTRFS_IOC_CLONE fails, try FICLONE for ext4
+        result = ioctl(dst_fd, FICLONE, src_fd);
+        if (result == -1)
+        {
+            if (errno == ENOTTY || errno == EOPNOTSUPP)
+            {
+                fprintf(stderr, "Error: Filesystem does not support file cloning\n");
+            }
+            else
+            {
+                perror("Error cloning file");
+            }
+        }
+    }
 
     close(src_fd);
     close(dst_fd);

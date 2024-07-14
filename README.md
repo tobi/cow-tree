@@ -37,12 +37,6 @@ These use cases make COW-Tree an invaluable tool for developers and system admin
 - Supports symbolic links, preserving their targets in the cloned structure
 - Maintains file timestamps and permissions, except it makes files user writeable if they aren't already
 
-## Support
-
-
-
-Also, be careful, this isn't exactly the most battle hardened project as its written 99% by Cloude 3.5 :-)
-
 ## Compilation
 
 To compile the program, use the following command: `make`
