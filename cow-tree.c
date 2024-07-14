@@ -5,8 +5,14 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <sys/stat.h>
-#include <sys/clonefile.h>
 #include <dirent.h>
+
+#ifdef __APPLE__
+#include <sys/clonefile.h>
+#elif __linux__
+#include <sys/ioctl.h>
+#include <linux/btrfs.h>
+#endif
 
 #define MAX_PATH 1024
 
@@ -51,6 +57,37 @@ int main(int argc, char *argv[])
     return clone_directory(source, target, preserve_permissions);
 }
 
+int clone_file(const char *source, const char *target)
+{
+#ifdef __APPLE__
+    return clonefile(source, target, 0);
+#elif __linux__
+    int src_fd = open(source, O_RDONLY);
+    if (src_fd == -1)
+    {
+        perror("Error opening source file");
+        return -1;
+    }
+
+    int dst_fd = open(target, O_WRONLY | O_CREAT, 0644);
+    if (dst_fd == -1)
+    {
+        perror("Error opening target file");
+        close(src_fd);
+        return -1;
+    }
+
+    int result = ioctl(dst_fd, BTRFS_IOC_CLONE, src_fd);
+
+    close(src_fd);
+    close(dst_fd);
+
+    return result;
+#else
+#error "Unsupported platform"
+#endif
+}
+
 int clone_item(const char *source, const char *target, int preserve_permissions)
 {
     struct stat st;
@@ -73,7 +110,7 @@ int clone_item(const char *source, const char *target, int preserve_permissions)
         if (access(target, F_OK) != 0)
         {
             // Target doesn't exist, clone it
-            if (clonefile(source, target, 0) != 0)
+            if (clone_file(source, target) != 0)
             {
                 perror("Error cloning file");
                 return 1;
@@ -97,7 +134,7 @@ int clone_item(const char *source, const char *target, int preserve_permissions)
                     perror("Error removing old target file");
                     return 1;
                 }
-                if (clonefile(source, target, 0) != 0)
+                if (clone_file(source, target) != 0)
                 {
                     perror("Error updating file");
                     return 1;

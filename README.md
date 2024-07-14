@@ -2,7 +2,7 @@
 
 ## Overview
 
-The COW Tree Cloning Program is a C utility that creates a copy-on-write (COW) clone of a directory tree at a different mount location. It uses the `clonefile` system call to efficiently clone files and directories while preserving copy-on-write semantics. (OSX Only)
+The COW Tree Cloning Program is a C utility that creates a copy-on-write (COW) clone of a directory tree at a different mount location. It uses operating system native features like `clonefile` to efficiently clone files and directories while preserving copy-on-write semantics. This speeds up these opeations and saves diskspace.
 
 ## Usage
 
@@ -37,10 +37,9 @@ These use cases make COW-Tree an invaluable tool for developers and system admin
 - Supports symbolic links, preserving their targets in the cloned structure
 - Maintains file timestamps and permissions, except it makes files user writeable if they aren't already
 
-## Requirements
+## Support
 
-- macOS operating system (the program uses the `clonefile` system call, which is specific to macOS)
-- GCC or Clang compiler
+
 
 Also, be careful, this isn't exactly the most battle hardened project as its written 99% by Cloude 3.5 :-)
 

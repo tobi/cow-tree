@@ -1,2 +1,3 @@
-./cow-tree
+cow-tree
 tests/to/*
+dist/
